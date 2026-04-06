@@ -17,13 +17,7 @@ async function populateWarehouses(selectId) {
 async function populateSuppliers(selectId) {
   const el = document.getElementById(selectId);
   if(!el) return;
-  let { data } = await supabase.from('suppliers').select('id, name');
-  // For demo if empty, we insert a fake one
-  if(!data || data.length === 0) {
-    await supabase.from('suppliers').insert([{name: 'المورد الافتراضي'}]);
-    const res = await supabase.from('suppliers').select('id, name');
-    data = res.data;
-  }
+  const { data } = await supabase.from('suppliers').select('id, name');
   el.innerHTML = '<option value="">-- اختر المورد --</option>';
   data?.forEach(s => el.innerHTML += `<option value="${s.id}">${s.name}</option>`);
 }
@@ -31,24 +25,79 @@ async function populateSuppliers(selectId) {
 async function populateCustomers(selectId) {
   const el = document.getElementById(selectId);
   if(!el) return;
-  let { data } = await supabase.from('customers').select('id, name');
-    // For demo if empty, we insert a fake one
-  if(!data || data.length === 0) {
-    await supabase.from('customers').insert([{name: 'العميل الافتراضي'}]);
-    const res = await supabase.from('customers').select('id, name');
-    data = res.data;
-  }
+  const { data } = await supabase.from('customers').select('id, name');
   el.innerHTML = '<option value="">-- اختر العميل --</option>';
   data?.forEach(c => el.innerHTML += `<option value="${c.id}">${c.name}</option>`);
 }
 
-function getProductOptions() {
-  let opts = '<option value="">-- اختر الصنف --</option>';
-  productsCache.forEach(p => {
-    opts += `<option value="${p.id}">${p.name} (${p.product_code})</option>`;
+
+// --- AUTOCOMPLETE LOGIC ---
+window.buildProductAutocomplete = function() {
+  const uniq = Math.random().toString(36).substr(2, 9);
+  return `
+    <div class="ac-wrap">
+      <input type="text" class="p-search" placeholder="ابحث بالاسم أو الكود..." onfocus="showAC(this)" oninput="filterAC(this)" style="width:100%; min-width:180px;">
+      <input type="hidden" class="p-select">
+      <div class="ac-list" id="ac-${uniq}"></div>
+    </div>
+  `;
+};
+
+window.showAC = function(inp) {
+  const wrap = inp.closest('.ac-wrap');
+  const list = wrap.querySelector('.ac-list');
+  list.style.display = 'block';
+  filterAC(inp);
+  
+  // click anywhere outside to close
+  document.addEventListener('click', function closeAC(e) {
+    if(!wrap.contains(e.target)) {
+      list.style.display = 'none';
+      document.removeEventListener('click', closeAC);
+    }
   });
-  return opts;
-}
+};
+
+window.filterAC = function(inp) {
+  const list = inp.closest('.ac-wrap').querySelector('.ac-list');
+  const hidden = inp.closest('.ac-wrap').querySelector('.p-select');
+  const term = inp.value.toLowerCase().trim();
+  
+  if(!term) hidden.value = ''; // clear hidden if search is cleared
+  
+  let html = '';
+  const filtered = productsCache.filter(p => 
+    p.name.toLowerCase().includes(term) || 
+    p.product_code.toLowerCase().includes(term)
+  );
+  
+  if(filtered.length === 0) {
+    html = \`<div class="ac-item" style="color:var(--text-muted); cursor:default;">لا توجد نتائج مطابقة</div>\`;
+  } else {
+    filtered.forEach(p => {
+      // Escape quotes for safe HTML insertion
+      const safeName = p.name.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+      html += \`<div class="ac-item" onclick="selectAC(this, '\${p.id}', '\${safeName}', '\${p.product_code}')">\${safeName} <span style="font-size:10px; color:#aaa;">(\${p.product_code})</span></div>\`;
+    });
+  }
+  list.innerHTML = html;
+};
+
+window.selectAC = function(itemEl, id, name, code) {
+  const wrap = itemEl.closest('.ac-wrap');
+  const inp = wrap.querySelector('.p-search');
+  const hidden = wrap.querySelector('.p-select');
+  
+  // Unescape before putting in value
+  inp.value = name.replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+  hidden.value = id;
+  wrap.querySelector('.ac-list').style.display = 'none';
+  
+  if(window.checkStock) {
+    window.checkStock(hidden);
+  }
+};
+
 
 // ------------------------------------
 // GOODS RECEIPT (IN)
@@ -63,8 +112,8 @@ document.getElementById('btn-add-receipt-item')?.addEventListener('click', () =>
   const tbody = document.getElementById('receipt-items-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><select class="p-select">${getProductOptions()}</select></td>
-    <td><input type="text" class="p-batch" placeholder="Lot / Batch" required></td>
+    <td>${buildProductAutocomplete()}</td>
+    <td><input type="text" class="p-batch" placeholder="الباتش" required></td>
     <td><input type="date" class="p-opt-date" required></td>
     <td><input type="number" class="p-qty" min="1" value="1" style="width:60px;"></td>
     <td><button class="btn bp btn-sm" onclick="this.closest('tr').remove()">X</button></td>
@@ -89,7 +138,7 @@ document.getElementById('btn-save-receipt')?.addEventListener('click', async () 
     const expiry = row.querySelector('.p-opt-date').value;
     const qty = row.querySelector('.p-qty').value;
     
-    if(!prodId || !batch || !expiry || !qty) return showMsg('يرجى تعبئة كافة بيانات الأصناف', 'error');
+    if(!prodId || !batch || !expiry || !qty) return showMsg('يرجى اختيار الصنف وتعبئة كافة البيانات', 'error');
     items.push({ product_id: prodId, batch_number: batch, expiry_date: expiry, quantity: qty });
   }
   
@@ -117,7 +166,6 @@ document.getElementById('btn-save-receipt')?.addEventListener('click', async () 
     const { error: itemsErr } = await supabase.from('receipt_items').insert(itemsToInsert);
     if(itemsErr) {
        showMsg(itemsErr.message, 'error');
-       // In a real app we might need a transaction, Supabase rpc is preferred for atomicity.
     } else {
        showMsg('تم التوريد بنجاح! تم تحديث المخزون.');
        document.getElementById('receipt-items-body').innerHTML = '';
@@ -139,7 +187,7 @@ document.getElementById('btn-add-issue-item')?.addEventListener('click', () => {
   const tbody = document.getElementById('issue-items-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><select class="p-select" onchange="checkStock(this)">${getProductOptions()}</select></td>
+    <td>${buildProductAutocomplete()}</td>
     <td><input type="number" class="p-qty" min="1" value="1" style="width:100px;"></td>
     <td class="stk-info" style="color:var(--text); font-weight:bold;">0</td>
     <td><button class="btn bp btn-sm" onclick="this.closest('tr').remove()">X</button></td>
@@ -147,10 +195,10 @@ document.getElementById('btn-add-issue-item')?.addEventListener('click', () => {
   tbody.appendChild(tr);
 });
 
-window.checkStock = async function(selectEl) {
+window.checkStock = async function(hiddenInput) {
   const whId = document.getElementById('issue-warehouse').value;
-  const prodId = selectEl.value;
-  const infoTd = selectEl.closest('tr').querySelector('.stk-info');
+  const prodId = hiddenInput.value;
+  const infoTd = hiddenInput.closest('tr').querySelector('.stk-info');
   if(!whId || !prodId) return infoTd.textContent = '0';
   
   infoTd.textContent = '...';
@@ -177,14 +225,13 @@ document.getElementById('btn-save-issue')?.addEventListener('click', async () =>
     const prodId = row.querySelector('.p-select').value;
     const qty = row.querySelector('.p-qty').value;
     
-    if(!prodId || !qty) return showMsg('يرجى تعبئة كافة بيانات الأصناف', 'error');
+    if(!prodId || !qty) return showMsg('يرجى اختيار الصنف وتحديد الكمية', 'error');
     items.push({ product_id: prodId, quantity: qty });
   }
   
   confirmAction('صرف البضاعة باستخدام أقدم صلاحية (FIFO) تلقائياً؟', async () => {
     const userId = (await supabase.auth.getUser()).data.user.id;
     
-    // Insert Header
     const { data: headerData, error: headerErr } = await supabase.from('goods_issues').insert([{
       doc_date: docDate,
       warehouse_id: whId,
@@ -196,13 +243,11 @@ document.getElementById('btn-save-issue')?.addEventListener('click', async () =>
     
     const issueId = headerData[0].id;
     
-    // Insert Items - Supabase Database TRIGGER 'trg_issue_fifo' will execute FIFO logic
     const itemsToInsert = items.map(it => ({ issue_id: issueId, ...it }));
     
     const { error: itemsErr } = await supabase.from('issue_items').insert(itemsToInsert);
     if(itemsErr) {
        showMsg('خطأ: ' + itemsErr.message, 'error');
-       // In case of FIFO error (e.g. not enough stock), the insert will fail and raise exception.
     } else {
        showMsg('تم صرف البضاعة (FIFO) بنجاح!');
        document.getElementById('issue-items-body').innerHTML = '';
@@ -223,8 +268,8 @@ document.getElementById('btn-add-transfer-item')?.addEventListener('click', () =
   const tbody = document.getElementById('transfer-items-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td><select class="p-select">${getProductOptions()}</select></td>
-    <td><input type="text" class="p-batch" placeholder="Lot / Batch" required></td>
+    <td>${buildProductAutocomplete()}</td>
+    <td><input type="text" class="p-batch" placeholder="الباتش" required></td>
     <td><input type="number" class="p-qty" min="1" value="1" style="width:60px;"></td>
     <td><button class="btn bp btn-sm" onclick="this.closest('tr').remove()">X</button></td>
   `;
@@ -247,7 +292,7 @@ document.getElementById('btn-save-transfer')?.addEventListener('click', async ()
     const batch = row.querySelector('.p-batch').value;
     const qty = row.querySelector('.p-qty').value;
     
-    if(!prodId || !qty || !batch) return showMsg('يرجى تعبئة كافة بيانات التحويل', 'error');
+    if(!prodId || !qty || !batch) return showMsg('يرجى إكمال بيانات التحويل كاملة', 'error');
     items.push({ product_id: prodId, batch_number: batch, quantity: qty });
   }
   

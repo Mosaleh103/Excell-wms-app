@@ -5,6 +5,7 @@
 const pages = [
   'page-welcome',
   'page-dashboard',
+  'page-def-categories',
   'page-def-products',
   'page-def-warehouses',
   'page-op-receipt',
@@ -27,8 +28,11 @@ const menuStructure = [
     title: 'التعريفات',
     icon: '📦',
     items: [
+      { id: 'menu-categories', label: 'الفئات والتصنيفات', page: 'page-def-categories', role: 'admin' },
       { id: 'menu-products', label: 'المنتجات', page: 'page-def-products', role: 'admin,warehouse_keeper' },
-      { id: 'menu-warehouses', label: 'المستودعات', page: 'page-def-warehouses', role: 'admin' }
+      { id: 'menu-warehouses', label: 'المستودعات', page: 'page-def-warehouses', role: 'admin' },
+      { id: 'menu-customers', label: 'العملاء', page: 'page-def-customers', role: 'admin,warehouse_keeper' },
+      { id: 'menu-suppliers', label: 'الموردين', page: 'page-def-suppliers', role: 'admin,warehouse_keeper' }
     ]
   },
   {
@@ -84,39 +88,46 @@ function buildMenu() {
     
     if(items.length > 0) {
       const gDiv = document.createElement('div');
-      gDiv.className = 'menu-group';
-      gDiv.style.marginBottom = '12px';
+      gDiv.className = 'mb-menu';
       
-      const gTitle = document.createElement('div');
-      gTitle.className = 'menu-title';
-      gTitle.innerHTML = `${group.icon} ${group.title}`;
-      gTitle.style.color = 'var(--teal)';
-      gTitle.style.fontSize = '12px';
-      gTitle.style.fontWeight = 'bold';
-      gTitle.style.padding = '4px 8px';
+      const gTitle = document.createElement('button');
+      gTitle.className = 'mb-menu-btn';
+      gTitle.innerHTML = `<span style="font-size:16px;">${group.icon}</span> ${group.title} <span class="arrow">▼</span>`;
       gDiv.appendChild(gTitle);
       
+      const dd = document.createElement('div');
+      dd.className = 'mb-dropdown';
+      
+      gTitle.onclick = (e) => {
+        // close others
+        document.querySelectorAll('.mb-dropdown.open').forEach(d => { if(d !== dd) d.classList.remove('open'); });
+        document.querySelectorAll('.mb-menu-btn.open').forEach(b => { if(b !== gTitle) b.classList.remove('open'); });
+        
+        gTitle.classList.toggle('open');
+        dd.classList.toggle('open');
+        e.stopPropagation();
+      };
+      
       items.forEach(it => {
-        const btn = document.createElement('button');
-        btn.className = 'menu-btn';
+        const btn = document.createElement('div');
+        btn.className = 'mb-dd-item';
         btn.id = it.id;
         btn.textContent = it.label;
-        btn.style.width = '100%';
-        btn.style.textAlign = 'right';
-        btn.style.padding = '8px 16px';
-        btn.style.background = 'transparent';
-        btn.style.border = 'none';
-        btn.style.color = 'white';
-        btn.style.cursor = 'pointer';
-        btn.style.borderRadius = '4px';
-        
-        btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.1)';
-        btn.onmouseout = () => btn.style.background = 'transparent';
-        
         btn.onclick = () => {
           showPage(it.page);
+          dd.classList.remove('open');
+          gTitle.classList.remove('open');
         };
-        gDiv.appendChild(btn);
+        dd.appendChild(btn);
+      });
+      gDiv.appendChild(dd);
+      
+      // Close all when clicking outside
+      document.addEventListener('click', (e) => {
+        if(!gDiv.contains(e.target)) {
+          dd.classList.remove('open');
+          gTitle.classList.remove('open');
+        }
       });
       container.appendChild(gDiv);
     }

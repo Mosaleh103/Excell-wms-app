@@ -82,20 +82,20 @@
 </div>
 
 <!-- APP -->
-<div id="app" style="display:none; flex-direction: row; height: 100vh;">
-  <!-- SIDEBAR (New layout style per WMS instructions) -->
-  <div class="sidebar" id="sidebar" style="width: 250px; background: var(--black); color: white; display: flex; flex-direction: column;">
-    <div class="mb-brand" style="padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
-      <img src="logo.png" alt="WMS" style="width: 40px; border-radius: 50%;">
-      <div class="mb-brand-text" style="color:white;"><span class="t1">Mini WMS</span></div>
+<div id="app" style="display:none; flex-direction: column; height: 100vh;">
+  <!-- ODOO TOPBAR -->
+  <div class="menubar" id="sidebar">
+    <div class="mb-brand">
+      <img src="logo.png" alt="WMS">
+      <div class="mb-brand-text"><span class="t1">Mini WMS</span></div>
     </div>
-    <div class="mb-menus" id="mb-menus" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px;">
+    <div class="mb-menus" id="mb-menus">
       <!-- Menus injected by app.js -->
     </div>
-    <div class="mb-user" style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 14px;">
-      <div id="nav-name" style="font-weight: bold; margin-bottom: 4px;"></div>
-      <div id="nav-role" style="font-size: 12px; color: var(--green); margin-bottom: 8px;"></div>
-      <button class="logout-btn" id="btn-logout" style="width: 100%; padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">تسجيل الخروج</button>
+    <div class="mb-user">
+      <span class="ub" id="nav-name"></span>
+      <span class="rb" id="nav-role"></span>
+      <button class="logout-btn" id="btn-logout">خروج</button>
     </div>
   </div>
 
@@ -149,23 +149,108 @@
 
       <!-- DEFINITIONS: PRODUCTS -->
       <div class="page" id="page-def-products">
-        <div class="mbar"><label>📦 تعريف المنتجات</label>
-          <button class="btn bg btn-sm" id="btn-new-product" style="margin-right:auto;">+ منتج جديد</button>
+        <div class="mbar"><label>📦 تعريف المنتجات</label></div>
+        
+        <div class="card"><div class="card-head"><h2>إضافة منتج جديد</h2></div>
+          <div class="card-body">
+            <div class="fg fg3">
+               <div class="ff"><label>الفئة الرئيسية *</label><select id="prod-main-cat" onchange="window.filterOrigins()"><option value="">-- جاري التحميل... --</option></select></div>
+               <div class="ff"><label>المنشأ *</label><select id="prod-sub-cat"><option value="">-- اختر الفئة أولاً --</option></select></div>
+               <div class="ff"><label>كود المنتج *</label><input type="text" id="prod-code" placeholder="الباركود أو الكود"></div>
+               <div class="ff" style="grid-column: span 2;"><label>اسم المنتج *</label><input type="text" id="prod-name" placeholder="اسم المنتج"></div>
+               <div class="ff"><label>الوحدة *</label><input type="text" id="prod-unit" placeholder="مثال: كرتون, حبة"></div>
+               <div class="ff"><label>حد إعادة الطلب</label><input type="number" id="prod-reorder" placeholder="0" value="0" min="0"></div>
+               <div class="ff"><label>المستودع الافتراضي</label><select id="prod-def-wh"><option value="">-- بدون مستودع افتراضي --</option></select></div>
+            </div>
+            <div class="btn-row"><button class="btn bg" id="btn-save-product">✔ حفظ المنتج</button></div>
+          </div>
         </div>
-        <div class="card"><div class="card-body" style="padding:0;">
-          <table class="tbl"><thead><tr><th>الكود</th><th>المنتج</th><th>الوحدة</th><th>المستودع الافتراضي</th><th>حد إعادة الطلب</th></tr></thead>
+
+        <div class="card"><div class="card-head"><h2>قائمة المنتجات المتاحة</h2></div>
+        <div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>التصنيف</th><th>الكود</th><th>المنتج</th><th>الوحدة</th><th>المستودع الافتراضي</th><th>حد الطلب</th></tr></thead>
           <tbody id="def-products-body"></tbody></table>
         </div></div>
       </div>
 
+      <!-- DEFINITIONS: CATEGORIES -->
+      <div class="page" id="page-def-categories">
+        <div class="mbar"><label>📑 تعريف الفئات والتصنيفات</label></div>
+        
+        <div class="card"><div class="card-head"><h2>إضافة فئة رئيسية جديدة</h2></div>
+          <div class="card-body">
+            <div class="fg">
+               <div class="ff"><label>اسم الفئة الرئيسية *</label><input type="text" id="cat-name" placeholder="مثال: Surgical Instruments"></div>
+            </div>
+            <div class="btn-row"><button class="btn bg" id="btn-save-category">✔ حفظ الفئة الرئيسية</button></div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">ملاحظة: سيتم تلقائياً إضافة المستوى الثاني (محلي / مستورد) أسفل هذه الفئة.</p>
+          </div>
+        </div>
+
+        <div class="card"><div class="card-head"><h2>شجرة الفئات بالنظام</h2></div>
+        <div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>اسم الفئة</th><th>مستوى التصنيف</th><th>الفئة الأب (تتبع لـ)</th></tr></thead>
+          <tbody id="def-categories-body"></tbody></table>
+        </div></div>
+      </div>
+
+
       <!-- DEFINITIONS: WAREHOUSES -->
       <div class="page" id="page-def-warehouses">
-        <div class="mbar"><label>🏢 تعريف المستودعات</label>
-          <button class="btn bg btn-sm" id="btn-new-warehouse" style="margin-right:auto;">+ مستودع جديد</button>
+        <div class="mbar"><label>🏢 تعريف المستودعات</label></div>
+        
+        <div class="card"><div class="card-head"><h2>إضافة مستودع جديد</h2></div>
+          <div class="card-body">
+            <div class="fg">
+               <div class="ff"><label>اسم المستودع *</label><input type="text" id="wh-name" placeholder="اسم المستودع"></div>
+               <div class="ff"><label>الموقع / العنوان</label><input type="text" id="wh-loc" placeholder="مثال: الرياض الصناعية"></div>
+            </div>
+            <div class="btn-row"><button class="btn bg" id="btn-save-warehouse">✔ حفظ المستودع</button></div>
+          </div>
         </div>
-        <div class="card"><div class="card-body" style="padding:0;">
+
+        <div class="card"><div class="card-head"><h2>قائمة المستودعات</h2></div>
+        <div class="card-body" style="padding:0;">
           <table class="tbl"><thead><tr><th>اسم المستودع</th><th>الموقع</th><th>تاريخ الإنشاء</th></tr></thead>
           <tbody id="def-warehouses-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- DEFINITIONS: CUSTOMERS -->
+      <div class="page" id="page-def-customers">
+        <div class="mbar"><label>👥 تعريف العملاء (للصرف)</label></div>
+        <div class="card"><div class="card-head"><h2>إضافة عميل جديد</h2></div>
+          <div class="card-body">
+            <div class="fg">
+               <div class="ff"><label>اسم العميل *</label><input type="text" id="cust-name" placeholder="اسم العميل أو الجهة"></div>
+               <div class="ff"><label>معلومات التواصل</label><input type="text" id="cust-info" placeholder="رقم الهاتف / الإيميل"></div>
+            </div>
+            <div class="btn-row"><button class="btn bg" id="btn-save-customer">✔ حفظ العميل</button></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>قائمة العملاء</h2></div>
+        <div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>اسم العميل</th><th>معلومات التواصل</th><th>تاريخ الإضافة</th></tr></thead>
+          <tbody id="def-customers-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- DEFINITIONS: SUPPLIERS -->
+      <div class="page" id="page-def-suppliers">
+        <div class="mbar"><label>🏭 تعريف الموردين (للاستلام)</label></div>
+        <div class="card"><div class="card-head"><h2>إضافة مورد جديد</h2></div>
+          <div class="card-body">
+            <div class="fg">
+               <div class="ff"><label>اسم المورد *</label><input type="text" id="supp-name" placeholder="اسم المورد أو الشركة"></div>
+               <div class="ff"><label>معلومات التواصل</label><input type="text" id="supp-info" placeholder="رقم الهاتف / الإيميل"></div>
+            </div>
+            <div class="btn-row"><button class="btn bg" id="btn-save-supplier">✔ حفظ المورد</button></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>قائمة الموردين</h2></div>
+        <div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>اسم المورد</th><th>معلومات التواصل</th><th>تاريخ الإضافة</th></tr></thead>
+          <tbody id="def-suppliers-body"></tbody></table>
         </div></div>
       </div>
 
@@ -267,7 +352,6 @@
 </div><!-- end app -->
 
 <script src="supabase.js"></script>
-<script src="permissions.js"></script>
 <script src="auth.js"></script>
 <script src="wms_definitions.js"></script>
 <script src="wms_operations.js"></script>
