@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini WMS - إدارة المخازن</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="ci">⚠️</div>
+    <div class="confirm-title" id="ct">تأكيد</div>
+    <div class="confirm-msg" id="cm"></div>
+    <div class="confirm-btns">
+      <button class="btn br" id="cy">تأكيد</button>
+      <button class="btn bp" id="cn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-overlay" id="chpw-overlay">
+  <div class="modal-box">
+    <div class="modal-title">🔐 تغيير كلمة المرور</div>
+    <div class="modal-sub" id="chpw-sub">أول تسجيل دخول — يرجى تغيير كلمة المرور</div>
+    <div class="lf">
+      <label>كلمة المرور الجديدة</label>
+      <div class="pw-wrap"><input type="password" id="chpw-new" placeholder="8 أحرف على الأقل"><button class="pw-eye" data-t="chpw-new">👁️</button></div>
+    </div>
+    <div class="lf">
+      <label>تأكيد كلمة المرور</label>
+      <div class="pw-wrap"><input type="password" id="chpw-confirm" placeholder="أعد كتابة كلمة المرور"><button class="pw-eye" data-t="chpw-confirm">👁️</button></div>
+    </div>
+    <div class="login-err" id="chpw-err"></div>
+    <button class="login-btn" id="btn-chpw" style="margin-top:8px;">حفظ كلمة المرور الجديدة</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="logo.png" alt="WMS">
+      <div class="login-co">شركة رحلة الامتياز للتجارة</div>
+    </div>
+    <div class="login-title">نظام إدارة المخازن (WMS)</div>
+    <div class="login-sub">Warehouse Management System</div>
+    <div class="lf"><label>البريد الإلكتروني</label><input type="email" id="li-email" placeholder="example@email.com" autocomplete="email"></div>
+    <div class="lf"><label>كلمة المرور</label>
+      <div class="pw-wrap"><input type="password" id="li-pass" placeholder="كلمة المرور" autocomplete="current-password"><button class="pw-eye" data-t="li-pass">👁️</button></div>
+    </div>
+    <button class="login-btn" id="btn-login">تسجيل الدخول</button>
+    <div class="login-err" id="li-err"></div>
+    <button class="forgot-link" id="btn-forgot">نسيت كلمة المرور؟</button>
+    <div class="forgot-box" id="forgot-box">
+      <div class="lf"><label>البريد الإلكتروني</label><input type="email" id="forgot-email" placeholder="أدخل بريدك"></div>
+      <button class="login-btn" id="btn-reset" style="background:var(--teal);">إرسال رابط إعادة التعيين</button>
+      <div class="login-err" id="reset-msg" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WELCOME PAGE (after login) -->
+<div id="page-welcome">
+  <div class="wlc-shape"></div>
+  <div class="wlc-shape"></div>
+  <div class="wlc-shape"></div>
+  <div class="wlc-shape"></div>
+  <div class="wlc-shape"></div>
+  <div class="wlc-inner">
+    <div class="wlc-title"><img src="white_logo.png" alt="WMS" class="wlc-logo-img"></div>
+    <div class="wlc-sub">شركة رحلة الامتياز للتجارة - إدارة المخازن</div>
+    <div class="wlc-divider"></div>
+    <div class="wlc-name" id="wlc-username" style="display:none"></div>
+    <div class="wlc-apps" id="wlc-apps"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none; flex-direction: row; height: 100vh;">
+  <!-- SIDEBAR (New layout style per WMS instructions) -->
+  <div class="sidebar" id="sidebar" style="width: 250px; background: var(--black); color: white; display: flex; flex-direction: column;">
+    <div class="mb-brand" style="padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+      <img src="logo.png" alt="WMS" style="width: 40px; border-radius: 50%;">
+      <div class="mb-brand-text" style="color:white;"><span class="t1">Mini WMS</span></div>
+    </div>
+    <div class="mb-menus" id="mb-menus" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 16px;">
+      <!-- Menus injected by app.js -->
+    </div>
+    <div class="mb-user" style="padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 14px;">
+      <div id="nav-name" style="font-weight: bold; margin-bottom: 4px;"></div>
+      <div id="nav-role" style="font-size: 12px; color: var(--green); margin-bottom: 8px;"></div>
+      <button class="logout-btn" id="btn-logout" style="width: 100%; padding: 8px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-content" style="flex: 1; display: flex; flex-direction: column; background: var(--bg); overflow-y: auto; position: relative;">
+    
+    <!-- TOPBAR -->
+    <div class="topbar" style="height: 60px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px;">
+      <div class="search-wrap" style="margin-bottom: 0; max-width: 300px;">
+        <input type="text" placeholder="بحث شامل...">
+      </div>
+      <div style="margin-right: auto; display: flex; gap: 10px;">
+        <span class="statusbar" style="position: static; background: transparent; padding:0;"><span class="sdot" id="sdot"></span><span id="smsg">جاهز</span></span>
+      </div>
+    </div>
+
+    <!-- PRINT HEADER -->
+    <div class="print-header" id="ph">
+      <img src="logo.png" alt="WMS">
+      <h2>شركة رحلة الامتياز للتجارة</h2>
+      <p id="ph-sub">تقرير مستودع</p>
+    </div>
+
+    <div class="pages-container" style="padding: 20px;">
+      <!-- ═══ PAGES ═══ -->
+
+      <!-- DASHBOARD -->
+      <div class="page" id="page-dashboard">
+        <div class="mbar"><label>📊 لوحة التحكم (المخازن)</label>
+          <button class="btn bt btn-sm" id="btn-dash-refresh" style="margin-right:auto;">🔄 تحديث</button>
+        </div>
+        <div class="kpi-grid" id="dash-kpis">
+          <div class="kpi"><div class="kpi-lbl">إجمالي الأصناف</div><div class="kpi-val" id="kpi-total-products">0</div></div>
+          <div class="kpi"><div class="kpi-lbl">إجمالي المخزون (كمية)</div><div class="kpi-val" id="kpi-total-stock">0</div></div>
+          <div class="kpi amber"><div class="kpi-lbl">مواد قاربت على الانتهاء</div><div class="kpi-val" id="kpi-expiry-alerts">0</div></div>
+          <div class="kpi red"><div class="kpi-lbl">نواقص (أقل من حد الطلب)</div><div class="kpi-val" id="kpi-reorder-alerts">0</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px; margin-top:20px;" id="dash-charts-wrap">
+          <div class="card"><div class="card-head"><h2>📦 حركة المخزون الأخيرة</h2></div>
+            <div class="card-body" style="padding:0; min-height:400px;">
+              <table class="tbl"><thead><tr><th>العملية</th><th>المنتج</th><th>الكمية</th><th>المستودع</th><th>التاريخ</th></tr></thead><tbody id="recent-movements"></tbody></table>
+            </div>
+          </div>
+          <div class="card"><div class="card-head"><h2>🏢 توزيع المخزون حسب المستودع</h2></div>
+            <div class="card-body" style="padding:0; min-height:400px;">
+              <table class="tbl"><thead><tr><th>المستودع</th><th>رصيد المواد</th></tr></thead><tbody id="warehouse-dist"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEFINITIONS: PRODUCTS -->
+      <div class="page" id="page-def-products">
+        <div class="mbar"><label>📦 تعريف المنتجات</label>
+          <button class="btn bg btn-sm" id="btn-new-product" style="margin-right:auto;">+ منتج جديد</button>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>الكود</th><th>المنتج</th><th>الوحدة</th><th>المستودع الافتراضي</th><th>حد إعادة الطلب</th></tr></thead>
+          <tbody id="def-products-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- DEFINITIONS: WAREHOUSES -->
+      <div class="page" id="page-def-warehouses">
+        <div class="mbar"><label>🏢 تعريف المستودعات</label>
+          <button class="btn bg btn-sm" id="btn-new-warehouse" style="margin-right:auto;">+ مستودع جديد</button>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>اسم المستودع</th><th>الموقع</th><th>تاريخ الإنشاء</th></tr></thead>
+          <tbody id="def-warehouses-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- OPERATIONS: GOODS RECEIPT (IN) -->
+      <div class="page" id="page-op-receipt">
+        <div class="mbar"><label>📥 استلام بضاعة (إدخال)</label>
+          <input type="date" id="receipt-date">
+        </div>
+        <div class="card"><div class="card-head"><h2>البيانات الأساسية</h2></div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="ff"><label>المستودع</label><select id="receipt-warehouse"></select></div>
+              <div class="ff"><label>المورد</label><select id="receipt-supplier"></select></div>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>أصناف الاستلام</h2><button class="btn bg btn-sm" id="btn-add-receipt-item">+ إضافة صنف</button></div>
+          <div class="card-body" style="padding:8px;">
+            <table class="items-table">
+              <thead><tr><th>الصنف</th><th>الباتش (رقم التشغيلة)</th><th>تاريخ الصلاحية</th><th>الكمية</th><th></th></tr></thead>
+              <tbody id="receipt-items-body"></tbody>
+            </table>
+            <div class="btn-row"><button class="btn bg" id="btn-save-receipt">✔ حفظ التوريد</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATIONS: GOODS ISSUE (OUT) -->
+      <div class="page" id="page-op-issue">
+        <div class="mbar"><label>📤 صرف بضاعة (إخراج)</label>
+          <input type="date" id="issue-date">
+        </div>
+        <div class="card"><div class="card-head"><h2>البيانات الأساسية</h2></div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="ff"><label>المستودع</label><select id="issue-warehouse"></select></div>
+              <div class="ff"><label>العميل</label><select id="issue-customer"></select></div>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>أصناف الصرف (يتم حساب FIFO تلقائياً)</h2><button class="btn bg btn-sm" id="btn-add-issue-item">+ إضافة صنف</button></div>
+          <div class="card-body" style="padding:8px;">
+            <table class="items-table">
+              <thead><tr><th>الصنف</th><th>الكمية المطلوبة</th><th>المتوفر تقريبياً</th><th></th></tr></thead>
+              <tbody id="issue-items-body"></tbody>
+            </table>
+            <div class="btn-row"><button class="btn bg" id="btn-save-issue">✔ حفظ الصرف</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATIONS: STOCK TRANSFER -->
+      <div class="page" id="page-op-transfer">
+        <div class="mbar"><label>🔄 تحويل مخزني</label>
+          <input type="date" id="transfer-date">
+        </div>
+         <div class="card"><div class="card-head"><h2>بيانات التحويل</h2></div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="ff"><label>من مستودع</label><select id="transfer-from"></select></div>
+              <div class="ff"><label>إلى مستودع</label><select id="transfer-to"></select></div>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>أصناف التحويل</h2><button class="btn bg btn-sm" id="btn-add-transfer-item">+ إضافة صنف</button></div>
+          <div class="card-body" style="padding:8px;">
+             <table class="items-table">
+              <thead><tr><th>الصنف</th><th>الباتش (رقم التشغيلة)</th><th>الكمية</th><th></th></tr></thead>
+              <tbody id="transfer-items-body"></tbody>
+            </table>
+            <div class="btn-row"><button class="btn bg" id="btn-save-transfer">✔ حفظ التحويل</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTS: STOCK BALANCE -->
+      <div class="page" id="page-rep-balance">
+        <div class="mbar"><label>📊 أرصدة المخزون</label>
+          <button class="btn bt btn-sm" id="btn-print-balance" style="margin-right:auto;">🖨️ طباعة</button>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0;">
+          <table class="tbl"><thead><tr><th>المستودع</th><th>المنتج</th><th>رقم التشغيلة (Batch)</th><th>الصلاحية</th><th>الرصيد الحالي</th></tr></thead>
+          <tbody id="rep-balance-body"></tbody></table>
+        </div></div>
+      </div>
+
+      <!-- SETTINGS - USERS -->
+      <div class="page" id="page-users">
+        <!-- Reusing standard CRM users page setup -->
+        <div class="card"><div class="card-head"><h2>👥 إدارة المستخدمين</h2></div>
+          <div class="card-body">
+            <table class="tbl"><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th></tr></thead><tbody id="users-body"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+    </div> <!-- end pages container -->
+  </div> <!-- end main content -->
+</div><!-- end app -->
+
+<script src="supabase.js"></script>
+<script src="permissions.js"></script>
+<script src="auth.js"></script>
+<script src="wms_definitions.js"></script>
+<script src="wms_operations.js"></script>
+<script src="wms_reports.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
