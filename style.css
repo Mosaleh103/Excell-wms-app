@@ -175,8 +175,12 @@ body { font-family: 'Tajawal', sans-serif; background: var(--bg-page); color: va
 #smsg { color:var(--text-muted); }
 
 /* ── PAGES ── */
+@keyframes fadeInPage {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .page { display:none; padding:20px 24px; max-width:1440px; margin:0 auto; }
-.page.active { display:block; min-height:calc(100vh - 120px); }
+.page.active { display:block; min-height:calc(100vh - 120px); animation: fadeInPage 0.25s ease-out forwards; }
 
 /* ── CARDS ── */
 .card { background:white; border-radius:var(--r-lg); box-shadow:var(--shadow-xs); margin-bottom:16px; overflow:visible; border:1px solid var(--border); transition:box-shadow var(--tr-normal); }
@@ -244,7 +248,16 @@ body { font-family: 'Tajawal', sans-serif; background: var(--bg-page); color: va
 .kpi.blue::after { background:rgba(26,106,184,0.05); }
 .kpi-lbl { font-size:11px; color:var(--text-muted); font-weight:600; margin-bottom:5px; }
 .kpi-val { font-size:22px; font-weight:900; color:var(--navy); letter-spacing:-0.5px; }
-.kpi-sub { font-size:10px; color:var(--text-muted); margin-top:4px; }
+.kpi-sub {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 4px;
+  font-weight: 500;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  padding-top: 4px;
+  width: 100%;
+  color: var(--text-muted);
+}
 .kpi-icon { position:absolute; top:14px; left:14px; font-size:20px; opacity:0.12; }
 
 /* ── TABLES ── */
@@ -593,3 +606,87 @@ body { font-family: 'Tajawal', sans-serif; background: var(--bg-page); color: va
   .perm-user-list { max-height: 200px; }
 }
 #app { min-height:100vh; }
+
+/* ── EXPIRY BADGES (Inventory) ── */
+.badge-expired { background:#fee2e2; color:#dc2626; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; }
+.badge-near    { background:#fef3c7; color:#d97706; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; }
+.badge-ok      { background:#dcfce7; color:#16a34a; padding:1px 7px; border-radius:4px; font-size:10px; font-weight:700; }
+
+/* ── LEDGER SUMMARY BOX ── */
+.ledger-summary-box {
+  display:flex; gap:12px; flex-wrap:wrap;
+  background:white; border-radius:var(--r-md);
+  border:1px solid var(--border);
+  padding:12px 18px; margin-bottom:14px;
+  box-shadow:var(--shadow-xs);
+}
+.sum-item { font-size:13px; font-weight:600; padding:8px 18px; border-radius:var(--r-sm); }
+.sum-in  { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
+.sum-out { background:#fff1f2; color:#dc2626; border:1px solid #fecaca; }
+.sum-bal { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   ERP DOCUMENT UI v3.0 ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Row Validation Highlighting */
+.items-table tbody tr.row-error { background-color: #fef2f2 !important; }
+.items-table tbody tr.row-error input, .items-table tbody tr.row-error select { border-color: #fca5a5; }
+.items-table tbody tr.row-ok { background-color: #f0fdf4 !important; }
+.items-table tbody tr.row-ok input { border-color: #bbf7d0; }
+
+/* Detailed Option Stock Badges */
+.sb-ok { color: #16a34a; font-weight: 700; background: #dcfce7; padding: 3px 8px; border-radius: 20px; font-size: 11px; white-space: nowrap; }
+.sb-err { color: #dc2626; font-weight: 700; background: #fee2e2; padding: 3px 8px; border-radius: 20px; font-size: 11px; white-space: nowrap; }
+
+/* Sticky Header & Footer for Line Items Table */
+.items-table { position: relative; border-collapse: separate; border-spacing: 0; width: 100%; }
+.items-table thead th {
+  position: sticky; 
+  top: 0; 
+  z-index: 10;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 var(--border), 0 -1px 0 var(--border);
+}
+.items-table tfoot td, .items-table tfoot th {
+  position: sticky; 
+  bottom: 0; 
+  z-index: 10;
+  background: #f8fafc;
+  box-shadow: 0 -1px 0 var(--border);
+}
+
+/* Post Button Hinting */
+.btn-disabled-hint {
+  cursor: not-allowed !important;
+  opacity: 0.65;
+}
+
+/* Interactive Documents List Rows */
+#docs-list-body tr { transition: background 0.15s ease; }
+#docs-list-body tr:hover { background: #f1f5f9; cursor: pointer; transform: translateY(-1px); }
+#docs-list-body tr:active { transform: translateY(0); }
+
+/* Monospace for document numbers */
+.mono-bold {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-weight: 700;
+  color: var(--excell-blue);
+  letter-spacing: 0.5px;
+}
+
+/* Odoo-style Sticky Actions Bar */
+.actions-sticky {
+  position: sticky;
+  bottom: 0px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  margin: 0 -24px -20px -24px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

@@ -41,6 +41,28 @@
   </div>
 </div>
 
+<!-- ADMIN RESET PASSWORD MODAL -->
+<div class="modal-overlay" id="admin-chpw-overlay">
+  <div class="modal-box">
+    <div class="modal-title">🔐 إعادة تعيين كلمة المرور للمستخدم</div>
+    <div class="modal-sub" id="admin-chpw-sub" style="color:var(--excell-blue); font-weight:700;">جاري التعديل لـ: -</div>
+    <input type="hidden" id="admin-chpw-uid">
+    <div class="lf">
+      <label>كلمة المرور الجديدة</label>
+      <div class="pw-wrap"><input type="password" id="admin-chpw-new" placeholder="6 أحرف على الأقل"><button class="pw-eye" data-t="admin-chpw-new">👁️</button></div>
+    </div>
+    <div class="lf">
+      <label>تأكيد كلمة المرور</label>
+      <div class="pw-wrap"><input type="password" id="admin-chpw-confirm" placeholder="أعد كتابة كلمة المرور"><button class="pw-eye" data-t="admin-chpw-confirm">👁️</button></div>
+    </div>
+    <div class="login-err" id="admin-chpw-err"></div>
+    <div style="display:flex; gap:10px; margin-top:15px;">
+      <button type="button" class="login-btn" id="btn-admin-chpw-save" style="margin-top:0; flex:1;">حفظ التغيير</button>
+      <button type="button" class="login-btn" id="btn-admin-chpw-cancel" style="margin-top:0; flex:1; background:#94a3b8;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGIN -->
 <div id="login-screen" class="login-wrap">
   <div class="login-box">
@@ -129,7 +151,11 @@
         </div>
         <div class="kpi-grid" id="dash-kpis">
           <div class="kpi"><div class="kpi-lbl">إجمالي الأصناف</div><div class="kpi-val" id="kpi-total-products">0</div></div>
-          <div class="kpi"><div class="kpi-lbl">إجمالي المخزون (كمية)</div><div class="kpi-val" id="kpi-total-stock">0</div></div>
+          <div class="kpi">
+            <div class="kpi-lbl">إجمالي المخزون (كرتونة)</div>
+            <div class="kpi-val" id="kpi-total-stock">0</div>
+            <div class="kpi-sub" id="kpi-total-units">0 Units</div>
+          </div>
           <div class="kpi amber"><div class="kpi-lbl">مواد قاربت على الانتهاء</div><div class="kpi-val" id="kpi-expiry-alerts">0</div></div>
           <div class="kpi red"><div class="kpi-lbl">نواقص (أقل من حد الطلب)</div><div class="kpi-val" id="kpi-reorder-alerts">0</div></div>
         </div>
@@ -147,68 +173,323 @@
         </div>
       </div>
 
-      <!-- DEFINITIONS: PRODUCTS -->
-      <div class="page" id="page-def-products">
-        <div class="mbar"><label>📦 تعريف المنتجات</label></div>
-        
-        <div class="card"><div class="card-head"><h2>إضافة منتج جديد</h2></div>
-          <div class="card-body">
-            <div class="fg fg3">
-               <div class="ff"><label>الفئة الرئيسية *</label><select id="prod-main-cat" onchange="window.filterOrigins()"><option value="">-- جاري التحميل... --</option></select></div>
-               <div class="ff"><label>المنشأ *</label><select id="prod-sub-cat"><option value="">-- اختر الفئة أولاً --</option></select></div>
-               <div class="ff"><label>كود المنتج *</label><input type="text" id="prod-code" placeholder="الباركود أو الكود"></div>
-               <div class="ff" style="grid-column: span 2;"><label>اسم المنتج *</label><input type="text" id="prod-name" placeholder="اسم المنتج"></div>
-               <div class="ff"><label>الوحدة *</label><input type="text" id="prod-unit" placeholder="مثال: كرتون, حبة"></div>
-               <div class="ff"><label>حد إعادة الطلب</label><input type="number" id="prod-reorder" placeholder="0" value="0" min="0"></div>
-               <div class="ff"><label>المستودع الافتراضي</label><select id="prod-def-wh"><option value="">-- بدون مستودع افتراضي --</option></select></div>
-            </div>
-            <div class="btn-row"><button class="btn bg" id="btn-save-product">✔ حفظ المنتج</button></div>
+      <!-- PAGE: DOCUMENTS LIST -->
+      <div class="page" id="page-documents">
+        <div class="mbar">
+          <label>📋 المستندات</label>
+          <div style="margin-right:auto;">
+            <button class="btn bg btn-sm" id="btn-new-document">➕ مستند جديد</button>
           </div>
         </div>
 
-        <div class="card"><div class="card-head"><h2>قائمة المنتجات المتاحة</h2></div>
-        <div class="card-body" style="padding:0;">
-          <table class="tbl"><thead><tr><th>التصنيف</th><th>الكود</th><th>المنتج</th><th>الوحدة</th><th>المستودع الافتراضي</th><th>حد الطلب</th></tr></thead>
+        <!-- Filters -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-body" style="padding:14px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+              <input type="text" id="docs-filter-search" placeholder="🔍 رقم المستند..."
+                style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;min-width:160px;flex:1;">
+              <select id="docs-filter-type" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:white;">
+                <option value="">كل الأنواع</option>
+                <option value="OPENING">🎯 رصيد افتتاحي</option>
+                <option value="RECEIPT">📥 استلام</option>
+                <option value="ISSUE">📤 صرف</option>
+                <option value="TRANSFER">🔄 تحويل</option>
+              </select>
+              <select id="docs-filter-status" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:white;">
+                <option value="">كل الحالات</option>
+                <option value="draft">📝 مسودة</option>
+                <option value="posted">✅ مرحّل</option>
+              </select>
+              <input type="date" id="docs-filter-from" title="من تاريخ"
+                style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <input type="date" id="docs-filter-to" title="إلى تاريخ"
+                style="padding:8px 10px;border:1px solid var(--border);border-radius:8px;">
+              <button class="btn btn-outline btn-sm" id="docs-filter-clear">✕</button>
+              <span style="font-size:12px;color:var(--text-muted);">
+                الإجمالي: <strong id="docs-count">0</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card">
+          <div class="card-body" style="padding:0;">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>رقم المستند</th>
+                  <th>النوع</th>
+                  <th>التاريخ</th>
+                  <th>المستودع</th>
+                  <th>الحالة</th>
+                  <th>تاريخ الترحيل</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="docs-list-body">
+                <tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">تحميل...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: DOCUMENT FORM -->
+      <div class="page" id="page-document-form">
+
+        <!-- Breadcrumb + Navigation -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <span style="cursor:pointer;color:var(--excell-blue);font-weight:600;" onclick="window.navigate('documents')">📋 المستندات</span>
+            <span style="color:#94a3b8;">›</span>
+            <span id="df-doc-number" style="font-family:monospace;font-weight:700;color:var(--navy);font-size:14px;">مستند جديد</span>
+            <span id="df-status-badge"></span>
+          </div>
+          <div id="df-nav-bar" style="display:flex;gap:8px;align-items:center;"></div>
+        </div>
+
+        <!-- Posted Info Bar -->
+        <div id="df-posted-info" style="display:none;background:#dcfce7;border:1px solid #bbf7d0;color:#065f46;
+          padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px;"></div>
+
+        <!-- Header Card -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-head"><h2>📄 بيانات المستند</h2></div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="ff">
+                <label>نوع المستند *</label>
+                <select id="df-type">
+                  <option value="OPENING">🎯 رصيد افتتاحي</option>
+                  <option value="RECEIPT" selected>📥 استلام (GRN)</option>
+                  <option value="ISSUE">📤 صرف (GIV)</option>
+                  <option value="TRANSFER">🔄 تحويل</option>
+                </select>
+              </div>
+              <div class="ff">
+                <label>التاريخ *</label>
+                <input type="date" id="df-date">
+              </div>
+              <div class="ff">
+                <label>المستودع *</label>
+                <select id="df-warehouse"><option value="">-- اختر المستودع --</option></select>
+              </div>
+            </div>
+            <div class="fg">
+              <div class="ff" id="df-supplier-row">
+                <label>المورد</label>
+                <select id="df-supplier"><option value="">-- اختر المورد --</option></select>
+              </div>
+              <div class="ff" id="df-customer-row" style="display:none;">
+                <label>العميل</label>
+                <select id="df-customer"><option value="">-- اختر العميل --</option></select>
+              </div>
+              <div class="ff" id="df-target-wh-row" style="display:none;">
+                <label>المستودع الهدف *</label>
+                <select id="df-target-wh"><option value="">-- اختر المستودع الهدف --</option></select>
+              </div>
+              <div class="ff" style="grid-column:1/-1;">
+                <label>ملاحظات</label>
+                <input type="text" id="df-notes" placeholder="ملاحظات اختيارية...">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lines Card -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-head">
+            <h2>📦 أصناف المستند</h2>
+            <button class="btn bg btn-sm" id="df-btn-add-line">+ إضافة صنف</button>
+          </div>
+          <div class="card-body" style="padding:8px;overflow-x:auto;">
+            <table class="tbl items-table" style="min-width:700px;">
+              <thead>
+                <tr>
+                  <th style="min-width:220px;">الصنف *</th>
+                  <th style="width:130px;">الباتش *</th>
+                  <th style="width:140px;">الصلاحية</th>
+                  <th style="width:90px;">الكمية *</th>
+                  <th style="width:100px;">الرصيد المتاح</th>
+                  <th style="width:44px;"></th>
+                </tr>
+              </thead>
+              <tbody id="df-lines-body"></tbody>
+              <tfoot>
+                <tr style="background:#f8fafc;">
+                  <td colspan="3" style="text-align:left;font-size:12px;color:#64748b;padding:8px 12px;">
+                    إجمالي الكمية
+                  </td>
+                  <td style="font-weight:700;color:var(--navy);font-size:14px;padding:8px;">
+                    <span id="df-total-qty">0</span>
+                  </td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div id="df-action-bar" class="actions-sticky"></div>
+      </div>
+
+      <!-- DEFINITIONS: PRODUCTS -->
+      <!-- DEFINITIONS: PRODUCTS -->
+
+      <div class="page" id="page-def-products">
+        <div class="mbar">
+          <label>📦 المنتجات</label>
+          <div style="margin-right:auto;">
+            <button class="btn bg btn-sm" onclick="window.navigate('def-products-form')">➕ إضافة منتج جديد</button>
+          </div>
+        </div>
+        
+        <!-- Quick Search (kept in list view for quick filtering) -->
+        <div class="card" style="border: 1px solid var(--excell-blue); background: #f0f7ff; margin-bottom: 20px;">
+          <div class="card-body" style="padding: 14px 20px;">
+            <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:20px;">🔍</span>
+                <div style="line-height:1.2;">
+                  <div style="font-size:13px; font-weight:800; color:var(--excell-blue);">بحث واستدعاء منتج</div>
+                  <div style="font-size:10px; color:#64748b;">ابحث لعرض التفاصيل والتعديل</div>
+                </div>
+              </div>
+              <div id="def-prod-search-wrap" style="flex:1; min-width:280px;">
+                <!-- Product Autocomplete Injected Here -->
+              </div>
+              <button class="btn bt btn-sm" id="btn-clear-def-search" style="display:none; padding:8px 12px;">✕ مسح البحث</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card"><div class="card-head"><h2>📦 قائمة المنتجات المتاحة</h2></div>
+        <div class="card-body" style="padding:0; overflow-x:auto;">
+          <table class="tbl"><thead><tr>
+            <th>التصنيف</th><th>الكود</th><th>المنتج (اضغط للبطاقة)</th><th>إنجليزي</th><th>الماركة</th><th>الوحدات</th><th>حد الطلب</th><th>خيارات</th>
+          </tr></thead>
           <tbody id="def-products-body"></tbody></table>
         </div></div>
       </div>
 
-      <!-- DEFINITIONS: CATEGORIES -->
-      <div class="page" id="page-def-categories">
-        <div class="mbar"><label>📑 تعريف الفئات والتصنيفات</label></div>
-        
-        <div class="card"><div class="card-head"><h2>إضافة فئة رئيسية جديدة</h2></div>
-          <div class="card-body">
-            <div class="fg">
-               <div class="ff"><label>اسم الفئة الرئيسية *</label><input type="text" id="cat-name" placeholder="مثال: Surgical Instruments"></div>
-            </div>
-            <div class="btn-row"><button class="btn bg" id="btn-save-category">✔ حفظ الفئة الرئيسية</button></div>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:10px;">ملاحظة: سيتم تلقائياً إضافة المستوى الثاني (محلي / مستورد) أسفل هذه الفئة.</p>
+      <!-- DEFINITIONS: PRODUCTS FORM -->
+      <div class="page" id="page-def-products-form">
+        <div class="mbar">
+          <label id="form-title-product">➕ إضافة / تعديل منتج</label>
+          <div style="margin-right:auto;">
+            <button class="btn btn-outline btn-sm" onclick="window.navigate('def-products')">← عودة للقائمة</button>
           </div>
         </div>
 
+        <div class="card">
+          <div class="card-body">
+            <input type="hidden" id="prod-edit-id" value="">
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#92400e;">
+              ⚠️ الحقول المطلوبة للحفظ: <strong>الفئة + اسم المنتج + الوحدة</strong>. الكود يتولد تلقائياً عند اختيار الفئة.
+            </div>
+            <div class="fg fg3">
+               <div class="ff">
+                 <label>الفئة التصنيفية (الطرفية فقط) *</label>
+                 <!-- searchable category ac (initialized by wms_definitions.js) -->
+                 <select id="prod-sub-cat"><option value="">-- اختر الفئة أولاً --</option></select>
+               </div>
+               <div class="ff">
+                 <label>كود المنتج (يتولد تلقائياً) *</label>
+                 <input type="text" id="prod-code" placeholder="يتم التوليد التلقائي بعد اختيار الفئة" style="background:#f0f6ff; font-weight:700; color:var(--excell-blue);">
+               </div>
+               <div class="ff"><label>اسم المنتج (عربي) *</label><input type="text" id="prod-name" placeholder="اسم المنتج بالعربي"></div>
+               <div class="ff"><label>اسم المنتج (إنجليزي)</label><input type="text" id="prod-name-en" placeholder="Product name in English"></div>
+               <div class="ff"><label>الماركة (Brand)</label><input type="text" id="prod-brand" placeholder="مثال: 3M"></div>
+               <div class="ff"><label>حد إعادة الطلب</label><input type="number" id="prod-reorder" placeholder="0" value="0" min="0"></div>
+            </div>
+            
+            <h3 style="margin:15px 0 10px; font-size:13px; color:var(--teal); border-bottom:1px solid var(--border); padding-bottom:5px;">⚙️ إعدادات الوحدات والتخزين</h3>
+            <div class="fg fg3">
+               <div class="ff"><label>الوحدة الرئيسية (مثل: حبة) *</label><input type="text" id="prod-unit" placeholder="مثال: حبة، لتر، كجم"></div>
+               <div class="ff"><label>كمية الكرتونة (Carton Qty)</label><input type="number" id="prod-carton-qty" placeholder="1" value="1" min="1"></div>
+               <div class="ff" style="display:none;">
+                 <label>عامل التحويل</label>
+                 <input type="number" id="prod-conversion" value="1">
+               </div>
+               <div class="ff"><label>المستودع الافتراضي</label><select id="prod-def-wh"><option value="">-- بدون مستودع --</option></select></div>
+            </div>
+            
+            <div class="btn-row actions-sticky" style="margin: 20px -24px -16px; padding: 12px 24px;">
+               <button class="btn bg" id="btn-save-product" style="min-width: 140px; justify-content: center;">✔ حفظ المنتج</button>
+               <button class="btn btn-outline" id="btn-cancel-product" onclick="window.navigate('def-products')">✕ إلغاء</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEFINITIONS: CATEGORIES -->
+      <div class="page" id="page-def-categories">
+        <div class="mbar">
+          <label>📑 الفئات والتصنيفات</label>
+          <div style="margin-right:auto;">
+            <button class="btn bg btn-sm" onclick="window.navigate('def-categories-form')">➕ إضافة فئة جديدة</button>
+          </div>
+        </div>
+        
         <div class="card"><div class="card-head"><h2>شجرة الفئات بالنظام</h2></div>
         <div class="card-body" style="padding:0;">
-          <table class="tbl"><thead><tr><th>اسم الفئة</th><th>مستوى التصنيف</th><th>الفئة الأب (تتبع لـ)</th></tr></thead>
+          <table class="tbl"><thead><tr><th>الكود</th><th>الاسم (عربي)</th><th>الاسم (إنجليزي)</th><th>المستوى</th><th>مندرجة تحت</th><th>خيارات</th></tr></thead>
           <tbody id="def-categories-body"></tbody></table>
         </div></div>
+      </div>
+
+      <!-- DEFINITIONS: CATEGORIES FORM -->
+      <div class="page" id="page-def-categories-form">
+        <div class="mbar">
+          <label id="form-title-category">➕ إضافة / تعديل فئة</label>
+          <div style="margin-right:auto;">
+            <button class="btn btn-outline btn-sm" onclick="window.navigate('def-categories')">← عودة للقائمة</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <input type="hidden" id="cat-edit-id" value="">
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#166534;">
+              ✅ الكود يتولد تلقائياً — اختر نوع الفئة والفئة الأصل وأدخل الاسم فقط.
+            </div>
+            <div class="fg fg3">
+               <div class="ff"><label>نوع الفئة</label>
+                  <select id="cat-type">
+                     <option value="main">فئة رئيسية (مستوى 1)</option>
+                     <option value="sub">فئة فرعية (مستوى 2)</option>
+                  </select>
+               </div>
+               <div class="ff" id="cat-parent-row" style="display:none;"><label>تتبع للفئة (Parent) *</label>
+                  <select id="cat-parent-id"><option value="">-- اختر الفئة الأصل --</option></select>
+               </div>
+               <div class="ff">
+                 <label>كود الفئة (يتولد تلقائياً)</label>
+                 <input type="text" id="cat-code" placeholder="يتم التوليد التلقائي" style="background:#f0f6ff; font-weight:700; color:var(--excell-blue);">
+               </div>
+               <div class="ff"><label>مسمى الفئة (عربي) *</label><input type="text" id="cat-name-ar" placeholder="مثال: أجهزة طبية"></div>
+               <div class="ff"><label>مسمى الفئة (إنجليزي)</label><input type="text" id="cat-name-en" placeholder="مثال: Medical Devices"></div>
+            </div>
+            <div class="btn-row actions-sticky" style="margin: 20px -24px -16px; padding: 12px 24px;">
+              <button class="btn bg" id="btn-save-category" data-perm="categories-create" style="min-width: 140px; justify-content: center;">✔ حفظ الفئة</button>
+              <button class="btn btn-outline" id="btn-cancel-category" onclick="window.navigate('def-categories')">✕ إلغاء</button>
+            </div>
+          </div>
+        </div>
       </div>
 
 
       <!-- DEFINITIONS: WAREHOUSES -->
       <div class="page" id="page-def-warehouses">
-        <div class="mbar"><label>🏢 تعريف المستودعات</label></div>
-        
-        <div class="card"><div class="card-head"><h2>إضافة مستودع جديد</h2></div>
-          <div class="card-body">
-            <div class="fg">
-               <div class="ff"><label>اسم المستودع *</label><input type="text" id="wh-name" placeholder="اسم المستودع"></div>
-               <div class="ff"><label>الموقع / العنوان</label><input type="text" id="wh-loc" placeholder="مثال: الرياض الصناعية"></div>
-            </div>
-            <div class="btn-row"><button class="btn bg" id="btn-save-warehouse">✔ حفظ المستودع</button></div>
+        <div class="mbar">
+          <label>🏢 المستودعات</label>
+          <div style="margin-right:auto;">
+            <button class="btn bg btn-sm" onclick="window.navigate('def-warehouses-form')">➕ إضافة مستودع جديد</button>
           </div>
         </div>
-
+        
         <div class="card"><div class="card-head"><h2>قائمة المستودعات</h2></div>
         <div class="card-body" style="padding:0;">
           <table class="tbl"><thead><tr><th>اسم المستودع</th><th>الموقع</th><th>تاريخ الإنشاء</th></tr></thead>
@@ -216,16 +497,36 @@
         </div></div>
       </div>
 
+      <!-- DEFINITIONS: WAREHOUSES FORM -->
+      <div class="page" id="page-def-warehouses-form">
+        <div class="mbar">
+          <label id="form-title-warehouse">➕ إضافة / تعديل مستودع</label>
+          <div style="margin-right:auto;">
+            <button class="btn btn-outline btn-sm" onclick="window.navigate('def-warehouses')">← عودة للقائمة</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <input type="hidden" id="wh-edit-id" value="">
+            <div class="fg">
+               <div class="ff"><label>اسم المستودع *</label><input type="text" id="wh-name" placeholder="اسم المستودع"></div>
+               <div class="ff"><label>الموقع / العنوان</label><input type="text" id="wh-loc" placeholder="مثال: الرياض الصناعية"></div>
+            </div>
+            <div class="btn-row actions-sticky" style="margin: 20px -24px -16px; padding: 12px 24px;">
+              <button class="btn bg" id="btn-save-warehouse" data-perm="warehouses-create" style="min-width: 140px; justify-content: center;">✔ حفظ المستودع</button>
+              <button class="btn btn-outline" id="btn-cancel-warehouse" onclick="window.navigate('def-warehouses')">✕ إلغاء</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- DEFINITIONS: CUSTOMERS -->
       <div class="page" id="page-def-customers">
-        <div class="mbar"><label>👥 تعريف العملاء (للصرف)</label></div>
-        <div class="card"><div class="card-head"><h2>إضافة عميل جديد</h2></div>
-          <div class="card-body">
-            <div class="fg">
-               <div class="ff"><label>اسم العميل *</label><input type="text" id="cust-name" placeholder="اسم العميل أو الجهة"></div>
-               <div class="ff"><label>معلومات التواصل</label><input type="text" id="cust-info" placeholder="رقم الهاتف / الإيميل"></div>
-            </div>
-            <div class="btn-row"><button class="btn bg" id="btn-save-customer">✔ حفظ العميل</button></div>
+        <div class="mbar">
+          <label>👥 العملاء</label>
+          <div style="margin-right:auto;">
+            <button class="btn bg btn-sm" onclick="window.navigate('def-customers-form')">➕ إضافة عميل جديد</button>
           </div>
         </div>
         <div class="card"><div class="card-head"><h2>قائمة العملاء</h2></div>
@@ -235,16 +536,35 @@
         </div></div>
       </div>
 
+      <!-- DEFINITIONS: CUSTOMERS FORM -->
+      <div class="page" id="page-def-customers-form">
+        <div class="mbar">
+          <label id="form-title-customer">➕ إضافة / تعديل عميل</label>
+          <div style="margin-right:auto;">
+            <button class="btn btn-outline btn-sm" onclick="window.navigate('def-customers')">← عودة للقائمة</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <input type="hidden" id="cust-edit-id" value="">
+            <div class="fg">
+               <div class="ff"><label>اسم العميل *</label><input type="text" id="cust-name" placeholder="اسم العميل أو الجهة"></div>
+               <div class="ff"><label>معلومات التواصل</label><input type="text" id="cust-info" placeholder="رقم الهاتف / الإيميل"></div>
+            </div>
+            <div class="btn-row actions-sticky" style="margin: 20px -24px -16px; padding: 12px 24px;">
+              <button class="btn bg" id="btn-save-customer" data-perm="customers-create" style="min-width: 140px; justify-content: center;">✔ حفظ العميل</button>
+              <button class="btn btn-outline" id="btn-cancel-customer" onclick="window.navigate('def-customers')">✕ إلغاء</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- DEFINITIONS: SUPPLIERS -->
       <div class="page" id="page-def-suppliers">
-        <div class="mbar"><label>🏭 تعريف الموردين (للاستلام)</label></div>
-        <div class="card"><div class="card-head"><h2>إضافة مورد جديد</h2></div>
-          <div class="card-body">
-            <div class="fg">
-               <div class="ff"><label>اسم المورد *</label><input type="text" id="supp-name" placeholder="اسم المورد أو الشركة"></div>
-               <div class="ff"><label>معلومات التواصل</label><input type="text" id="supp-info" placeholder="رقم الهاتف / الإيميل"></div>
-            </div>
-            <div class="btn-row"><button class="btn bg" id="btn-save-supplier">✔ حفظ المورد</button></div>
+        <div class="mbar">
+          <label>🏭 الموردين</label>
+          <div style="margin-right:auto;">
+            <button class="btn bg btn-sm" onclick="window.navigate('def-suppliers-form')">➕ إضافة مورد جديد</button>
           </div>
         </div>
         <div class="card"><div class="card-head"><h2>قائمة الموردين</h2></div>
@@ -254,10 +574,69 @@
         </div></div>
       </div>
 
+      <!-- DEFINITIONS: SUPPLIERS FORM -->
+      <div class="page" id="page-def-suppliers-form">
+        <div class="mbar">
+          <label id="form-title-supplier">➕ إضافة / تعديل مورد</label>
+          <div style="margin-right:auto;">
+            <button class="btn btn-outline btn-sm" onclick="window.navigate('def-suppliers')">← عودة للقائمة</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <input type="hidden" id="supp-edit-id" value="">
+            <div class="fg">
+               <div class="ff"><label>اسم المورد *</label><input type="text" id="supp-name" placeholder="اسم المورد أو الشركة"></div>
+               <div class="ff"><label>معلومات التواصل</label><input type="text" id="supp-info" placeholder="رقم الهاتف / الإيميل"></div>
+            </div>
+            <div class="btn-row actions-sticky" style="margin: 20px -24px -16px; padding: 12px 24px;">
+              <button class="btn bg" id="btn-save-supplier" data-perm="suppliers-create" style="min-width: 140px; justify-content: center;">✔ حفظ المورد</button>
+              <button class="btn btn-outline" id="btn-cancel-supplier" onclick="window.navigate('def-suppliers')">✕ إلغاء</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPERATIONS: OPENING STOCK -->
+      <div class="page" id="page-op-opening">
+        <div class="mbar"><label>🎯 رصيد أول المدة (تسوية مخزنية)</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-right:auto;">
+            <span style="font-size:11px;color:#64748b;">رقم الإذن:</span>
+            <input type="text" id="opening-doc-no" readonly style="width:100px;font-weight:700;color:var(--excell-blue);background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:4px 8px;font-size:12px;">
+            <input type="date" id="opening-date">
+            <button class="btn bt btn-sm" id="btn-print-opening">🖨️ طباعة</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>بيانات المستودع والتسوية</h2></div>
+          <div class="card-body">
+            <div class="fg">
+              <div class="ff"><label>اختر المستودع المُراد تأسيس الرصيد به *</label><select id="opening-warehouse"></select></div>
+              <div class="ff"><label>ملاحظات التسوية</label><input type="text" id="opening-notes" placeholder="مثال: إدخال رصيد أول المدة لعام 2026"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>أصناف الجرد (يمكن تكرار الصنف باختلاف اللوت/الدفعة)</h2></div>
+          <div class="card-body" style="padding:0; overflow-x:auto;">
+            <table class="tbl"><thead><tr><th>الصنف (كود / اسم) *</th><th>رقم الدفعة (Batch) *</th><th>تاريخ الصلاحية *</th><th>الكمية (بالوحدة الرئيسية) *</th><th>إجراء</th></tr></thead>
+              <tbody id="opening-items-body"></tbody>
+            </table>
+            <div style="padding:10px;"><button class="btn bt btn-sm" id="btn-add-opening-item">+ سطر جديد</button></div>
+          </div>
+        </div>
+        <div style="text-align:left; margin-top:15px;" data-perm="opening-create">
+          <button class="btn bg" id="btn-save-opening" style="padding: 10px 20px; font-size:14px;">✔ اعتماد وترحيل الأرصدة الافتتاحية</button>
+        </div>
+      </div>
+
       <!-- OPERATIONS: GOODS RECEIPT (IN) -->
       <div class="page" id="page-op-receipt">
-        <div class="mbar"><label>📥 استلام بضاعة (إدخال)</label>
-          <input type="date" id="receipt-date">
+        <div class="mbar"><label>📥 استلام بضاعة (GRN)</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-right:auto;">
+            <span style="font-size:11px;color:#64748b;">رقم الإذن:</span>
+            <input type="text" id="receipt-doc-no" readonly style="width:100px;font-weight:700;color:var(--excell-blue);background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:4px 8px;font-size:12px;">
+            <input type="date" id="receipt-date">
+            <button class="btn bt btn-sm" id="btn-print-receipt">🖨️ طباعة</button>
+          </div>
         </div>
         <div class="card"><div class="card-head"><h2>البيانات الأساسية</h2></div>
           <div class="card-body">
@@ -270,18 +649,26 @@
         <div class="card"><div class="card-head"><h2>أصناف الاستلام</h2><button class="btn bg btn-sm" id="btn-add-receipt-item">+ إضافة صنف</button></div>
           <div class="card-body" style="padding:8px;">
             <table class="items-table">
-              <thead><tr><th>الصنف</th><th>الباتش (رقم التشغيلة)</th><th>تاريخ الصلاحية</th><th>الكمية</th><th></th></tr></thead>
+              <thead><tr><th>الصنف *</th><th>الباتش (رقم التشغيلة) *</th><th>تاريخ الصلاحية *</th><th>الكمية *</th><th></th></tr></thead>
               <tbody id="receipt-items-body"></tbody>
             </table>
-            <div class="btn-row"><button class="btn bg" id="btn-save-receipt">✔ حفظ التوريد</button></div>
+            <div class="btn-row">
+              <button class="btn bg" id="btn-save-receipt">✔ حفظ واعتماد الاستلام</button>
+            </div>
           </div>
         </div>
       </div>
 
+
       <!-- OPERATIONS: GOODS ISSUE (OUT) -->
       <div class="page" id="page-op-issue">
         <div class="mbar"><label>📤 صرف بضاعة (إخراج)</label>
-          <input type="date" id="issue-date">
+          <div style="display:flex;gap:8px;align-items:center;margin-right:auto;">
+            <span style="font-size:11px;color:#64748b;">رقم الإذن:</span>
+            <input type="text" id="issue-doc-no" readonly style="width:100px;font-weight:700;color:var(--excell-blue);background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:4px 8px;font-size:12px;">
+            <input type="date" id="issue-date">
+            <button class="btn bt btn-sm" id="btn-print-issue">🖨️ طباعة</button>
+          </div>
         </div>
         <div class="card"><div class="card-head"><h2>البيانات الأساسية</h2></div>
           <div class="card-body">
@@ -294,20 +681,28 @@
         <div class="card"><div class="card-head"><h2>أصناف الصرف (يتم حساب FIFO تلقائياً)</h2><button class="btn bg btn-sm" id="btn-add-issue-item">+ إضافة صنف</button></div>
           <div class="card-body" style="padding:8px;">
             <table class="items-table">
-              <thead><tr><th>الصنف</th><th>الكمية المطلوبة</th><th>المتوفر تقريبياً</th><th></th></tr></thead>
+              <thead><tr><th>الصنف *</th><th>الكمية المطلوبة *</th><th>الرصيد المتاح</th><th></th></tr></thead>
               <tbody id="issue-items-body"></tbody>
             </table>
-            <div class="btn-row"><button class="btn bg" id="btn-save-issue">✔ حفظ الصرف</button></div>
+            <div class="btn-row">
+              <button class="btn bg" id="btn-save-issue">✔ حفظ واعتماد الصرف</button>
+            </div>
           </div>
         </div>
       </div>
 
+
       <!-- OPERATIONS: STOCK TRANSFER -->
       <div class="page" id="page-op-transfer">
         <div class="mbar"><label>🔄 تحويل مخزني</label>
-          <input type="date" id="transfer-date">
+          <div style="display:flex;gap:8px;align-items:center;margin-right:auto;">
+            <span style="font-size:11px;color:#64748b;">رقم الأمر:</span>
+            <input type="text" id="transfer-doc-no" readonly style="width:100px;font-weight:700;color:var(--excell-blue);background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:4px 8px;font-size:12px;">
+            <input type="date" id="transfer-date">
+            <button class="btn bt btn-sm" id="btn-print-transfer">🖨️ طباعة</button>
+          </div>
         </div>
-         <div class="card"><div class="card-head"><h2>بيانات التحويل</h2></div>
+        <div class="card"><div class="card-head"><h2>بيانات التحويل</h2></div>
           <div class="card-body">
             <div class="fg">
               <div class="ff"><label>من مستودع</label><select id="transfer-from"></select></div>
@@ -321,28 +716,211 @@
               <thead><tr><th>الصنف</th><th>الباتش (رقم التشغيلة)</th><th>الكمية</th><th></th></tr></thead>
               <tbody id="transfer-items-body"></tbody>
             </table>
-            <div class="btn-row"><button class="btn bg" id="btn-save-transfer">✔ حفظ التحويل</button></div>
+            <div class="btn-row">
+              <button class="btn bg" id="btn-save-transfer">✔ حفظ واعتماد التحويل</button>
+            </div>
           </div>
         </div>
       </div>
 
+
       <!-- REPORTS: STOCK BALANCE -->
       <div class="page" id="page-rep-balance">
-        <div class="mbar"><label>📊 أرصدة المخزون</label>
-          <button class="btn bt btn-sm" id="btn-print-balance" style="margin-right:auto;">🖨️ طباعة</button>
+        <div class="mbar"><label>📊 أرصدة المخزون الحالية</label>
+          <div style="display:flex; gap:8px; margin-right:auto;">
+            <button class="btn bt btn-sm" id="btn-export-balance-excel">📥 Excel</button>
+            <button class="btn bt btn-sm" id="btn-print-balance">🖨️ طباعة</button>
+          </div>
         </div>
-        <div class="card"><div class="card-body" style="padding:0;">
-          <table class="tbl"><thead><tr><th>المستودع</th><th>المنتج</th><th>رقم التشغيلة (Batch)</th><th>الصلاحية</th><th>الرصيد الحالي</th></tr></thead>
-          <tbody id="rep-balance-body"></tbody></table>
+        <div class="card"><div class="card-body" style="padding:0; overflow-x:auto;">
+          <table class="tbl"><thead><tr>
+            <th>المستودع</th><th>الكود</th><th>المنتج</th><th>رقم الباتش</th><th>الصلاحية</th><th>الرصيد الحالي</th>
+          </tr></thead>
+          <tbody id="rep-balance-body"><tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">⏳ جاري التحميل...</td></tr></tbody></table>
         </div></div>
+      </div>
+
+
+      <!-- REPORTS: PRODUCT LEDGER (دفتر الأستاذ) -->
+      <div class="page" id="page-ledger">
+        <div class="mbar"><label>📒 دفتر حركات المنتج (Product Ledger)</label>
+          <button class="btn bt btn-sm" id="btn-export-ledger-excel" style="margin-right:auto;">📥 تصدير Excel</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>🔍 فلاتر البحث</h2></div>
+          <div class="card-body">
+            <div class="fg fg3">
+              <div class="ff">
+                <label>المنتج (إلزامي) *</label>
+                <div id="ledger-product-wrap"></div>
+              </div>
+              <div class="ff"><label>من تاريخ</label><input type="date" id="ledger-date-from"></div>
+              <div class="ff"><label>إلى تاريخ</label><input type="date" id="ledger-date-to"></div>
+              <div class="ff">
+                <label>المستودع (اختياري)</label>
+                <select id="ledger-warehouse"><option value="">كل المستودعات</option></select>
+              </div>
+              <div class="ff"><label>رقم الباتش (اختياري)</label><input type="text" id="ledger-batch" placeholder="مثال: BATCH-001"></div>
+              <div class="ff" style="align-self:flex-end;">
+                <button class="btn bg" id="btn-search-ledger" style="width:100%;">🔍 عرض الحركات</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="ledger-summary"></div>
+
+        <div class="card">
+          <div class="card-body" style="padding:0; overflow-x:auto;">
+            <table class="tbl"><thead><tr>
+              <th>التاريخ</th>
+              <th>نوع الحركة</th>
+              <th>المرجع</th>
+              <th>الباتش</th>
+              <th>الصلاحية</th>
+              <th style="color:#16a34a;">وارد ↑</th>
+              <th style="color:#dc2626;">منصرف ↓</th>
+              <th>الرصيد</th>
+              <th>المستودع</th>
+            </tr></thead>
+            <tbody id="ledger-body">
+              <tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8;">🔍 اختر منتجاً واضغط بحث</td></tr>
+            </tbody></table>
+          </div>
+        </div>
       </div>
 
       <!-- SETTINGS - USERS -->
       <div class="page" id="page-users">
-        <!-- Reusing standard CRM users page setup -->
-        <div class="card"><div class="card-head"><h2>👥 إدارة المستخدمين</h2></div>
+        <div class="mbar"><label>👥 إدارة النظام والمستخدمين</label></div>
+        <div class="card"><div class="card-head"><h2>إضافة مستخدم جديد</h2></div>
           <div class="card-body">
-            <table class="tbl"><thead><tr><th>الاسم</th><th>البريد</th><th>الدور</th></tr></thead><tbody id="users-body"></tbody></table>
+            <div class="fg">
+               <div class="ff"><label>الاسم الكامل</label><input type="text" id="nu-name" placeholder="محمد أحمد"></div>
+               <div class="ff"><label>البريد الإلكتروني</label><input type="email" id="nu-email" placeholder="user@company.com"></div>
+               <div class="ff"><label>كلمة المرور</label><input type="password" id="nu-pass" placeholder="******"></div>
+               <div class="ff"><label>الصلاحية (الدور)</label>
+                 <select id="nu-role">
+                   <option value="warehouse_keeper">أمين مستودع (Keeper)</option>
+                   <option value="accountant">محاسب (Accountant)</option>
+                   <option value="admin">مدير نظام (Admin)</option>
+                 </select>
+               </div>
+            </div>
+            <div class="btn-row"><button class="btn bg" id="btn-add-user" data-perm="users-create">➕ إضافة مستخدم</button></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-head"><h2>👥 قائمة المستخدمين</h2></div>
+          <div class="card-body" style="padding:0;">
+            <table class="tbl"><thead><tr><th>الاسم الكامل</th><th>البريد (اسم المستخدم)</th><th>الدور</th><th>الإعدادات</th></tr></thead><tbody id="users-body"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS - PERMISSIONS (MATRIX) -->
+      <div class="page" id="page-permissions">
+        <div class="mbar"><label>🛡️ مصفوفة الصلاحيات (الديناميكية)</label></div>
+        <div class="card">
+          <div class="card-head">
+            <h2>تخصيص الصلاحيات للمستخدمين</h2>
+          </div>
+          <div class="card-body">
+            <div class="fg" style="margin-bottom:15px;">
+              <div class="ff">
+                <label>🔍 اختر المستخدم لعرض وتعديل صلاحياته</label>
+                <select id="matrix-user-select">
+                  <option value="">-- اختر مستخدماً --</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="overflow-x:auto;">
+              <table class="tbl" id="tbl-matrix">
+                <thead>
+                  <tr>
+                    <th>الشاشة / الوحدة (Module)</th>
+                    <th>عرض 👀</th>
+                    <th>إضافة ➕</th>
+                    <th>تعديل ✏️</th>
+                    <th>حذف ❌</th>
+                  </tr>
+                </thead>
+                <tbody id="matrix-body">
+                  <tr><td colspan="5" style="text-align:center; padding:20px; color:#94a3b8;">🔍 يرجى اختيار مستخدم أولاً من القائمة أعلاه</td></tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="btn-row" style="margin-top:20px;">
+              <button class="btn bg" id="btn-save-matrix" style="display:none; width:auto; padding:10px 30px;">✔ حفظ التعديلات للمستخدم</button>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+
+
+      <!-- DOCUMENT REGISTRY -->
+      <div class="page" id="page-doc-registry">
+        <div class="mbar">
+          <label>📋 سجل المستندات</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-right:auto;">
+            <span style="font-size:12px;color:#64748b;"><span id="reg-count">0</span> مستند</span>
+            <button class="btn bt btn-sm" id="reg-refresh">🔄 تحديث</button>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card">
+          <div class="card-head"><h2>🔍 بحث وتصفية</h2></div>
+          <div class="card-body">
+            <div class="fg" style="grid-template-columns:repeat(3,1fr) auto;">
+              <div class="ff">
+                <label>رقم المستند</label>
+                <input type="text" id="reg-search-doc" placeholder="GR-0001 أو OB-...">
+              </div>
+              <div class="ff">
+                <label>التاريخ</label>
+                <input type="date" id="reg-search-date">
+              </div>
+              <div class="ff">
+                <label>نوع المستند</label>
+                <select id="reg-search-type">
+                  <option value="">— جميع الأنواع —</option>
+                  <option value="opening">🎯 رصيد افتتاحي</option>
+                  <option value="purchase">📥 استلام (GRN)</option>
+                  <option value="sale">📤 صرف (GIV)</option>
+                  <option value="transfer">🔄 تحويل</option>
+                </select>
+              </div>
+              <div class="ff" style="display:flex;align-items:flex-end;">
+                <button class="btn bt" id="reg-clear-filters" style="width:auto;padding:10px 16px;">❌ مسح الفلتر</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results table -->
+        <div class="card">
+          <div class="card-head"><h2>📄 قائمة المستندات</h2></div>
+          <div class="card-body" style="padding:0;overflow-x:auto;">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>رقم المستند</th>
+                  <th>النوع</th>
+                  <th>التاريخ</th>
+                  <th>الوقت</th>
+                  <th>المستودع</th>
+                  <th>عدد الأصناف</th>
+                  <th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="reg-tbody">
+                <tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">تحميل...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -351,11 +929,18 @@
   </div> <!-- end main content -->
 </div><!-- end app -->
 
-<script src="supabase.js"></script>
+<script src="supabase_init.js"></script>
 <script src="auth.js"></script>
+<script src="wms_autocomplete.js"></script>
+<script src="wms_permissions.js"></script>
+<script src="documentService.js"></script>
+<script src="wms_documents.js"></script>
 <script src="wms_definitions.js"></script>
 <script src="wms_operations.js"></script>
 <script src="wms_reports.js"></script>
+<script src="wms_inventory.js"></script>
+<script src="wms_registry.js"></script>
+<script src="router.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
